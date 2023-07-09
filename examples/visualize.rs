@@ -2,10 +2,12 @@ use circmark_parse::prelude::*;
 
 fn main() {
     let input = std::fs::read_to_string(std::env::args().nth(1).expect("filename")).expect("read from file");
-    let (rest, chain) = circmark_parse::circmark_chain(&input).expect("parse circmark chain");
+    let (rest, document) = circmark_parse::document::document(&input).expect("parse circmark document");
     if !rest.trim().is_empty() {
         eprintln!("WARNING: trailing content: {rest:?}");
     }
+
+    let Section::Twoport(chain) = &document.sections[0] else { panic!("Expected twoport chain") };
 
     println!("{chain:#?}");
 
@@ -265,8 +267,9 @@ trait Drawer {
     fn shunt(&mut self, x: usize, elements: &[&Element]);
 }
 
-fn draw<D: Drawer>(chain: &CircmarkChain, drawer: &mut D) {
+fn draw<D: Drawer>(chain: &Chain, drawer: &mut D) {
     let mut x = 0;
+    let mut last_shunt_at = None;
     for node in chain.nodes() {
         match node {
             ChainNode::Series(element) => {
@@ -274,6 +277,11 @@ fn draw<D: Drawer>(chain: &CircmarkChain, drawer: &mut D) {
                 x += 1;
             }
             ChainNode::Shunt(element) => {
+                if let Some(last_shunt_at) = last_shunt_at {
+                    if last_shunt_at == x {
+                        x += 1;
+                    }
+                }
                 match element {
                     Element::Sub(sub_chain) => {
                         let elements: Vec<_> = sub_chain.nodes().iter().map(|node| {
@@ -289,12 +297,13 @@ fn draw<D: Drawer>(chain: &CircmarkChain, drawer: &mut D) {
                         drawer.shunt(x, &[element]);
                     }
                 }
+                last_shunt_at = Some(x);
             }
         }
     }
 }
 
-fn circuit_size(chain: &CircmarkChain) -> Result<(usize, usize), &'static str> {
+fn circuit_size(chain: &Chain) -> Result<(usize, usize), &'static str> {
     let (mut w, mut h) = (0, 1);
 
     for node in chain.nodes() {
@@ -316,7 +325,7 @@ fn circuit_size(chain: &CircmarkChain) -> Result<(usize, usize), &'static str> {
     Ok((w, h))
 }
 
-fn sub_chain_length(chain: &CircmarkChain) -> Result<usize, &'static str> {
+fn sub_chain_length(chain: &Chain) -> Result<usize, &'static str> {
     let mut l = 0;
     for node in chain.nodes() {
         match node {
