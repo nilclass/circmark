@@ -200,6 +200,46 @@ impl super::Drawer for SvgDrawer {
         ))
     }
 
+    fn current_source(&mut self, label: &str, position: Position, size: Size, rotate: bool) {
+        let radius = 15;
+        let offset = 10;
+        self.grow_viewbox(position, size, rotate);
+        let circle1 = Circle::new()
+            .set("cx", -offset)
+            .set("cy", 0)
+            .set("r", radius)
+            .set("stroke-width", 2)
+            .set("stroke", "black")
+            .set("fill", "none");
+        let circle2 = Circle::new()
+            .set("cx", offset)
+            .set("cy", 0)
+            .set("r", radius)
+            .set("stroke-width", 2)
+            .set("stroke", "black")
+            .set("fill", "none");
+        let line1 = Path::new()
+            .set("stroke", "black")
+            .set("fill", "none")
+            .set("stroke-width", "2")
+            .set("d", Data::new().move_to((-size.0/2, 0)).line_to((-(offset + radius), 0)));
+        let line2 = Path::new()
+            .set("stroke", "black")
+            .set("fill", "none")
+            .set("stroke-width", "2")
+            .set("d", Data::new().move_to((offset + radius, 0)).line_to((size.0 / 2, 0)));
+        self.add(self.transform(
+            Group::new()
+                .add(line1)
+                .add(circle1)
+                .add(circle2)
+                .add(line2)
+                .add(self.label(label, rotate, 30, 30)),
+            position,
+            rotate
+        ))
+    }
+
     fn open(&mut self, label: &str, position: layout::Position, size: layout::Size, rotate: bool) {
         self.grow_viewbox(position, size, rotate);
         let circle1 = Circle::new()

@@ -58,6 +58,10 @@ pub enum Element<'a> {
     V(&'a str),
     /// Inductance
     L(&'a str),
+    /// Impedance
+    Z(&'a str),
+    /// Current source
+    I(&'a str),
     /// Open circuit
     Open,
 }
@@ -78,6 +82,8 @@ impl Element<'_> {
             Element::C(id) => format!("C{id}"),
             Element::V(id) => format!("V{id}"),
             Element::L(id) => format!("L{id}"),
+            Element::Z(id) => format!("Z{id}"),
+            Element::I(id) => format!("I{id}"),
             Element::Open => format!(""),
         }
     }
@@ -93,10 +99,10 @@ impl<'a> Into<SubCircuit<'a>> for SubCircuitGroup<'a> {
 }
 
 pub fn document(input: &str) -> IResult<&str, Document<'_>> {
-    alt((
-        map(preceded(tag("@twoport:"), twoport), Document::Twoport),
-        map(sub_circuit, Document::Circuit),
-    ))(input)
+    match input.chars().nth(0) {
+        Some('|' | '-') => map(twoport, Document::Twoport)(input),
+        _ => map(sub_circuit, Document::Circuit)(input),
+    }
 }
 
 pub fn twoport(input: &str) -> IResult<&str, Twoport<'_>> {
@@ -116,6 +122,8 @@ pub fn element(input: &str) -> IResult<&str, Element<'_>> {
         map(preceded(tag("C"), alphanumeric1), Element::C),
         map(preceded(tag("V"), alphanumeric1), Element::V),
         map(preceded(tag("L"), alphanumeric1), Element::L),
+        map(preceded(tag("Z"), alphanumeric1), Element::Z),
+        map(preceded(tag("I"), alphanumeric1), Element::I),
         map(tag("O"), |_| Element::Open),
     ))(input)
 }
@@ -151,6 +159,8 @@ mod tests {
         assert_eq!(element("C2").unwrap().1, Element::C("2"));
         assert_eq!(element("V3").unwrap().1, Element::V("3"));
         assert_eq!(element("L4").unwrap().1, Element::L("4"));
+        assert_eq!(element("Zth1").unwrap().1, Element::Z("th1"));
+        assert_eq!(element("Ino").unwrap().1, Element::I("no"));
         assert_eq!(element("O").unwrap().1, Element::Open);
         assert_eq!(element("Req").unwrap().1, Element::R("eq"));
     }

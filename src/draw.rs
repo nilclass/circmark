@@ -37,6 +37,7 @@ pub trait Drawer {
     fn capacitor(&mut self, label: &str, position: Position, size: Size, rotate: bool);
     fn inductor(&mut self, label: &str, position: Position, size: Size, rotate: bool);
     fn voltage_source(&mut self, label: &str, position: Position, size: Size, rotate: bool);
+    fn current_source(&mut self, label: &str, position: Position, size: Size, rotate: bool);
     fn open(&mut self, label: &str, position: Position, size: Size, rotate: bool);
     fn wire(&mut self, a: Position, b: Position);
     fn junction(&mut self, position: Position);
@@ -49,6 +50,8 @@ impl Draw for circuit::Element<'_> {
             circuit::Element::C(_) => drawer.capacitor(&self.label(), ctx.position, size, ctx.rotate),
             circuit::Element::L(_) => drawer.inductor(&self.label(), ctx.position, size, ctx.rotate),
             circuit::Element::V(_) => drawer.voltage_source(&self.label(), ctx.position, size, ctx.rotate),
+            circuit::Element::Z(_) => drawer.resistor(&self.label(), ctx.position, size, ctx.rotate),
+            circuit::Element::I(_) => drawer.current_source(&self.label(), ctx.position, size, ctx.rotate),
             circuit::Element::Open => drawer.open(&self.label(), ctx.position, size, ctx.rotate),
         }
     }
