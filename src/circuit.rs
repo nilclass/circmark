@@ -6,6 +6,7 @@ use nom::{
     sequence::{preceded, delimited, separated_pair},
     bytes::complete::tag,
     character::complete::alphanumeric1,
+    error::{context, ContextError, ParseError, VerboseError},
 };
 
 /// A twoport is an arrangement of series and shunt elements in a signal path.
@@ -98,25 +99,25 @@ impl<'a> Into<SubCircuit<'a>> for SubCircuitGroup<'a> {
     }
 }
 
-pub fn document(input: &str) -> IResult<&str, Document<'_>> {
+pub fn document<'a>(input: &'a str) -> IResult<&'a str, Document<'a>, VerboseError<&str>> {
     match input.chars().nth(0) {
         Some('|' | '-') => map(twoport, Document::Twoport)(input),
         _ => map(sub_circuit, Document::Circuit)(input),
     }
 }
 
-pub fn twoport(input: &str) -> IResult<&str, Twoport<'_>> {
-    map(many1(twoport_link), |links| Twoport { links })(input)
+pub fn twoport<'a, E: ParseError<&'a str> + ContextError<&'a str>>(input: &'a str) -> IResult<&'a str, Twoport<'a>, E> {
+    context("twoport", map(many1(twoport_link), |links| Twoport { links }))(input)
 }
 
-pub fn twoport_link(input: &str) -> IResult<&str, TwoportLink<'_>> {
+pub fn twoport_link<'a, E: ParseError<&'a str> + ContextError<&'a str>>(input: &'a str) -> IResult<&'a str, TwoportLink<'a>, E> {
     alt((
         map(preceded(tag("-"), sub_circuit), TwoportLink::Series),
         map(preceded(tag("|"), sub_circuit), TwoportLink::Shunt),
     ))(input)
 }
 
-pub fn element(input: &str) -> IResult<&str, Element<'_>> {
+pub fn element<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, Element<'a>, E> {
     alt((
         map(preceded(tag("R"), alphanumeric1), Element::R),
         map(preceded(tag("C"), alphanumeric1), Element::C),
@@ -128,21 +129,21 @@ pub fn element(input: &str) -> IResult<&str, Element<'_>> {
     ))(input)
 }
 
-pub fn sub_circuit(input: &str) -> IResult<&str, SubCircuit<'_>> {
+pub fn sub_circuit<'a, E: ParseError<&'a str> + ContextError<&'a str>>(input: &'a str) -> IResult<&'a str, SubCircuit<'a>, E> {
     alt((
-        map(delimited(tag("("), sub_circuit_series, tag(")")), |group| group.into()),
-        map(element, SubCircuit::Element)
+        context("sub_circuit-group", map(delimited(tag("("), sub_circuit_series, tag(")")), |group| group.into())),
+        context("sub_circuit-element", map(element, SubCircuit::Element)),
     ))(input)
 }
 
-pub fn sub_circuit_series(input: &str) -> IResult<&str, SubCircuitGroup<'_>> {
+pub fn sub_circuit_series<'a, E: ParseError<&'a str> + ContextError<&'a str>>(input: &'a str) -> IResult<&'a str, SubCircuitGroup<'a>, E> {
     alt((
         map(separated_pair(sub_circuit_parallel, tag("+"), sub_circuit_parallel), |(left, right)| SubCircuitGroup::Series(left.into(), right.into())),
         sub_circuit_parallel
     ))(input)
 }
 
-pub fn sub_circuit_parallel(input: &str) -> IResult<&str, SubCircuitGroup<'_>> {
+pub fn sub_circuit_parallel<'a, E: ParseError<&'a str> + ContextError<&'a str>>(input: &'a str) -> IResult<&'a str, SubCircuitGroup<'a>, E> {
     alt((
         map(separated_pair(sub_circuit, tag("||"), sub_circuit), |(left, right)| SubCircuitGroup::Parallel(left, right)),
         map(sub_circuit, SubCircuitGroup::Single),

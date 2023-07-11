@@ -1,0 +1,34 @@
+<svg height="290" style="background: white" viewBox="0 0 380 290" width="380" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(190,145)">
+<path d="M-130,-100 L-100,-100" fill="none" stroke="black" stroke-width="2"/>
+<path d="M-130,100 L-100,100" fill="none" stroke="black" stroke-width="2"/>
+<g transform="translate(-130,0) rotate(90)">
+<path d="M-100,0 L-5,0" fill="none" stroke="black" stroke-width="2"/>
+<path d="M-5,-20 L-5,20" fill="none" stroke="black" stroke-width="4"/>
+<path d="M5,-10 L5,10" fill="none" stroke="black" stroke-width="4"/>
+<path d="M5,0 L100,0" fill="none" stroke="black" stroke-width="2"/>
+<text text-anchor="middle" transform="rotate(-90)" x="30" y="5">
+V1
+</text>
+</g>
+<g transform="translate(0,-100) rotate(0)">
+<circle cx="-100" cy="0" fill="white" r="5" stroke="black" stroke-width="2"/>
+<circle cx="100" cy="0" fill="white" r="5" stroke="black" stroke-width="2"/>
+<text text-anchor="middle" transform="" x="0" y="30">
+
+</text>
+</g>
+<path d="M-100,100 L100,100" fill="none" stroke="black" stroke-width="2"/>
+<path d="M100,-100 L130,-100" fill="none" stroke="black" stroke-width="2"/>
+<path d="M100,100 L130,100" fill="none" stroke="black" stroke-width="2"/>
+<g transform="translate(130,0) rotate(90)">
+<path d="M-100,0 L-5,0" fill="none" stroke="black" stroke-width="2"/>
+<path d="M-5,-15 L-5,15" fill="none" stroke="black" stroke-width="5"/>
+<path d="M5,-15 L5,15" fill="none" stroke="black" stroke-width="5"/>
+<path d="M5,0 L100,0" fill="none" stroke="black" stroke-width="2"/>
+<text text-anchor="middle" transform="rotate(-90)" x="30" y="5">
+C1
+</text>
+</g>
+</g>
+</svg>
