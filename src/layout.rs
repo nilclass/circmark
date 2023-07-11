@@ -3,6 +3,12 @@ use crate::circuit;
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Size(pub i32, pub i32);
 
+impl Size {
+    pub fn rotate(self) -> Self {
+        Self(self.1, self.0)
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub struct Position(pub i32, pub i32);
 
@@ -46,6 +52,33 @@ impl Layout for circuit::SubCircuit<'_> {
         match self {
             circuit::SubCircuit::Element(element) => element.layout_size(),
             circuit::SubCircuit::Group(group) => group.layout_size(),
+        }
+    }
+}
+
+impl Layout for circuit::TwoportLink<'_> {
+    fn layout_size(&self) -> Size {
+        match self {
+            circuit::TwoportLink::Series(circuit) => circuit.layout_size(),
+            circuit::TwoportLink::Shunt(circuit) => circuit.layout_size().rotate(),
+        }
+    }
+}
+
+impl Layout for circuit::Twoport<'_> {
+    fn layout_size(&self) -> Size {
+        self.links.iter().fold(Size(0, 0), |size, link| {
+            let Size(w, h) = link.layout_size();
+            Size(size.0 + w, size.1.max(h))
+        })
+    }
+}
+
+impl Layout for circuit::Document<'_> {
+    fn layout_size(&self) -> Size {
+        match self {
+            circuit::Document::Circuit(circuit) => circuit.layout_size(),
+            circuit::Document::Twoport(twoport) => twoport.layout_size(),
         }
     }
 }

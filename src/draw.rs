@@ -45,11 +45,11 @@ pub trait Drawer {
 impl Draw for circuit::Element<'_> {
     fn draw<D: Drawer>(&self, size: Size, ctx: Context, drawer: &mut D) {
         match self {
-            circuit::Element::R(label) => drawer.resistor(label, ctx.position, size, ctx.rotate),
-            circuit::Element::C(label) => drawer.capacitor(label, ctx.position, size, ctx.rotate),
-            circuit::Element::L(label) => drawer.inductor(label, ctx.position, size, ctx.rotate),
-            circuit::Element::V(label) => drawer.voltage_source(label, ctx.position, size, ctx.rotate),
-            circuit::Element::Open => drawer.open("", ctx.position, size, ctx.rotate),
+            circuit::Element::R(_) => drawer.resistor(&self.label(), ctx.position, size, ctx.rotate),
+            circuit::Element::C(_) => drawer.capacitor(&self.label(), ctx.position, size, ctx.rotate),
+            circuit::Element::L(_) => drawer.inductor(&self.label(), ctx.position, size, ctx.rotate),
+            circuit::Element::V(_) => drawer.voltage_source(&self.label(), ctx.position, size, ctx.rotate),
+            circuit::Element::Open => drawer.open(&self.label(), ctx.position, size, ctx.rotate),
         }
     }
 }
@@ -97,6 +97,60 @@ impl Draw for circuit::SubCircuit<'_> {
         match self {
             circuit::SubCircuit::Element(element) => element.draw(size, ctx, drawer),
             circuit::SubCircuit::Group(group) => group.draw(size, ctx, drawer),
+        }
+    }
+}
+
+impl Draw for circuit::Document<'_> {
+    fn draw<D: Drawer>(&self, size: Size, ctx: Context, drawer: &mut D) {
+        match self {
+            circuit::Document::Circuit(circuit) => circuit.draw(size, ctx, drawer),
+            circuit::Document::Twoport(twoport) => twoport.draw(size, ctx, drawer),
+        }
+    }
+}
+
+impl Draw for circuit::Twoport<'_> {
+    fn draw<D: Drawer>(&self, size: Size, ctx: Context, drawer: &mut D) {
+        let top_line = -size.1 / 2;
+        let bottom_line = size.1 / 2;
+        let mut offset = -size.0 / 2;
+        let mut links = self.links.iter().enumerate().peekable();
+        while let Some((i, link)) = links.next() {
+            let requested_size = link.layout_size();
+
+            offset += requested_size.0/2;
+                
+            match link {
+                circuit::TwoportLink::Series(circuit) => {
+                    circuit.draw(requested_size, ctx.translate(offset, -size.1/2), drawer);
+                    drawer.wire(Position(offset - requested_size.0 / 2, bottom_line), Position(offset + requested_size.0 / 2, bottom_line));
+                },
+                circuit::TwoportLink::Shunt(circuit) => {
+                    let left_exists = i != 0;
+                    let right_exists = links.peek().is_some();
+
+                    if left_exists {
+                        // top wire to the left
+                        drawer.wire(Position(offset - requested_size.0/2, top_line), Position(offset, top_line));
+                        // bottom wire to the left
+                        drawer.wire(Position(offset - requested_size.0/2, bottom_line), Position(offset, bottom_line));
+                    }
+                    if right_exists {
+                        // top wire to the right
+                        drawer.wire(Position(offset, top_line), Position(offset + requested_size.0/2, top_line));
+                        // bottom wire to the right
+                        drawer.wire(Position(offset, bottom_line), Position(offset + requested_size.0/2, bottom_line));
+                    }
+                    if left_exists && right_exists {
+                        drawer.junction(Position(offset, top_line));
+                        drawer.junction(Position(offset, bottom_line));
+                    }
+
+                    circuit.draw(Size(size.1, requested_size.0), ctx.translate(offset, 0).rotate(), drawer);
+                },
+            }
+            offset += requested_size.0/2;
         }
     }
 }

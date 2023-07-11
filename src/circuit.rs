@@ -8,9 +8,15 @@ use nom::{
     character::complete::alphanumeric1,
 };
 
+/// A twoport is an arrangement of series and shunt elements in a signal path.
+///
+/// For example a voltage divider would be a twoport with three links:
+/// - a shunt voltage source
+/// - series resistance R1
+/// - shunt resistance R2
 #[derive(PartialEq, Debug)]
 pub struct Twoport<'a> {
-    links: Vec<TwoportLink<'a>>,
+    pub links: Vec<TwoportLink<'a>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -19,26 +25,62 @@ pub enum TwoportLink<'a> {
     Shunt(SubCircuit<'a>),
 }
 
+/// A sub-circuit consists of either an element, or any series/parallel arrangement of elements.
+///
+/// Sub-circuits have two legs, just like an element.
 #[derive(PartialEq, Debug)]
 pub enum SubCircuit<'a> {
+    /// Single element, e.g. `R1`
     Element(Element<'a>),
+    /// Multiple elements, e.g. `(R1||R2)`
     Group(Box<SubCircuitGroup<'a>>),
 }
 
+/// Represents an arrangement of a group of sub-circuits
 #[derive(PartialEq, Debug)]
 pub enum SubCircuitGroup<'a> {
+    /// A single subcircuit
     Single(SubCircuit<'a>),
+    /// Two sub-circuits in series
     Series(SubCircuit<'a>, SubCircuit<'a>),
+    /// Two sub-circuits in parallel
     Parallel(SubCircuit<'a>, SubCircuit<'a>),
 }
 
+/// A single circuit element
 #[derive(PartialEq, Debug)]
 pub enum Element<'a> {
+    /// Resistance
     R(&'a str),
+    /// Capacitance
     C(&'a str),
+    /// Voltage source
     V(&'a str),
+    /// Inductance
     L(&'a str),
+    /// Open circuit
     Open,
+}
+
+/// A circmark document.
+///
+/// Currently either two-ended circuit (parallel/series arrangement), or a twoport network.
+#[derive(PartialEq, Debug)]
+pub enum Document<'a> {
+    Circuit(SubCircuit<'a>),
+    Twoport(Twoport<'a>),
+}
+
+impl Element<'_> {
+    pub fn label(&self) -> String {
+        match self {
+            Element::R(id) => format!("R{id}"),
+            Element::C(id) => format!("C{id}"),
+            Element::V(id) => format!("V{id}"),
+            Element::L(id) => format!("L{id}"),
+            Element::Open => format!(""),
+        }
+    }
 }
 
 impl<'a> Into<SubCircuit<'a>> for SubCircuitGroup<'a> {
@@ -48,6 +90,13 @@ impl<'a> Into<SubCircuit<'a>> for SubCircuitGroup<'a> {
             _ => SubCircuit::Group(Box::new(self))
         }
     }
+}
+
+pub fn document(input: &str) -> IResult<&str, Document<'_>> {
+    alt((
+        map(preceded(tag("@twoport:"), twoport), Document::Twoport),
+        map(sub_circuit, Document::Circuit),
+    ))(input)
 }
 
 pub fn twoport(input: &str) -> IResult<&str, Twoport<'_>> {
@@ -73,8 +122,8 @@ pub fn element(input: &str) -> IResult<&str, Element<'_>> {
 
 pub fn sub_circuit(input: &str) -> IResult<&str, SubCircuit<'_>> {
     alt((
-        map(element, SubCircuit::Element),
-        map(delimited(tag("("), sub_circuit_series, tag(")")), |group| SubCircuit::Group(Box::new(group))),
+        map(delimited(tag("("), sub_circuit_series, tag(")")), |group| group.into()),
+        map(element, SubCircuit::Element)
     ))(input)
 }
 

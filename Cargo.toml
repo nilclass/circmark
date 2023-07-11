@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 nom = "7.1.3"
 svg = "0.13.1"
+
+[[bin]]
+name = "cm-to-svg"
