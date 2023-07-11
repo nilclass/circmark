@@ -72,10 +72,11 @@ impl Draw for circuit::SubCircuitGroup<'_> {
                 right.draw(right_size, ctx.translate(right_size.0 / 2, 0), drawer);
             }
             circuit::SubCircuitGroup::Parallel(top, bottom) => {
+                let end_wire_length = 20;
                 let top_size = top.layout_size();
                 let bottom_size = bottom.layout_size();
                 let height_requested = top_size.1 + bottom_size.1;
-                let width = top_size.0.max(bottom_size.0);
+                let width = top_size.0.max(bottom_size.0) - 2 * end_wire_length;
                 let top_size = Size(width, size.1 * top_size.1 / height_requested);
                 let bottom_size = Size(width, size.1 * bottom_size.1 / height_requested);
                 top.draw(top_size, ctx.translate(0, -top_size.1 / 2), drawer);
@@ -90,6 +91,14 @@ impl Draw for circuit::SubCircuitGroup<'_> {
                 );
                 drawer.junction(ctx.translate(-width / 2, 0).position);
                 drawer.junction(ctx.translate(width / 2, 0).position);
+                drawer.wire(
+                    ctx.translate(-width / 2 - end_wire_length, 0).position,
+                    ctx.translate(-width / 2, 0).position,
+                );
+                drawer.wire(
+                    ctx.translate(width / 2 + end_wire_length, 0).position,
+                    ctx.translate(width / 2, 0).position,
+                );
             }
         }
     }

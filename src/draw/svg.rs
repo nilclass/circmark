@@ -161,7 +161,7 @@ impl super::Drawer for SvgDrawer {
                  .elliptical_arc_to((radius, radius, 0, 0, 1, -element_width/2 + radius * 8, 0))
                  .line_to((size.0/2, 0))
             );
-        self.add(self.transform(Group::new().add(path).add(self.label(label, rotate, -25, -20)), position, rotate));
+        self.add(self.transform(Group::new().add(path).add(self.label(label, rotate, 30, -20)), position, rotate));
     }
 
     fn voltage_source(&mut self, label: &str, position: layout::Position, size: layout::Size, rotate: bool) {
