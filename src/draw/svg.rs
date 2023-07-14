@@ -283,6 +283,8 @@ mod tests {
     use super::*;
     use crate::{circuit, draw::{Draw, Context}, layout::Layout};
 
+    type E = nom::error::VerboseError<&'static str>;
+
     #[test]
     fn test_draw_single_resistor() {
         let mut drawer = SvgDrawer::new();
@@ -334,7 +336,7 @@ mod tests {
     #[test]
     fn test_draw_two_series_resistors() {
         let mut drawer = SvgDrawer::new();
-        let circuit = circuit::sub_circuit("(R1+R2)").unwrap().1;
+        let circuit = circuit::sub_circuit::<E>("(R1+R2)").unwrap().1;
         circuit.draw(circuit.layout_size(), Context::default(), &mut drawer);
         svg::save("test-output/draw_two_series_resistors.svg", &drawer.finalize()).unwrap();
     }
@@ -342,7 +344,7 @@ mod tests {
     #[test]
     fn test_draw_two_series_resistors_rotated() {
         let mut drawer = SvgDrawer::new();
-        let circuit = circuit::sub_circuit("(R1+R2)").unwrap().1;
+        let circuit = circuit::sub_circuit::<E>("(R1+R2)").unwrap().1;
         circuit.draw(circuit.layout_size(), Context::default().rotate(), &mut drawer);
         svg::save("test-output/draw_two_series_resistors_rotated.svg", &drawer.finalize()).unwrap();
     }
@@ -350,7 +352,7 @@ mod tests {
     #[test]
     fn test_draw_two_parallel_resistors() {
         let mut drawer = SvgDrawer::new();
-        let circuit = circuit::sub_circuit("(R1||R2)").unwrap().1;
+        let circuit = circuit::sub_circuit::<E>("(R1||R2)").unwrap().1;
         circuit.draw(circuit.layout_size(), Context::default(), &mut drawer);
         svg::save("test-output/draw_two_parallel_resistors.svg", &drawer.finalize()).unwrap();
     }
@@ -358,7 +360,7 @@ mod tests {
     #[test]
     fn test_draw_parallel_series_combi() {
         let mut drawer = SvgDrawer::new();
-        let circuit = circuit::sub_circuit("(R1||(R2+R3))").unwrap().1;
+        let circuit = circuit::sub_circuit::<E>("(R1||(R2+R3))").unwrap().1;
         circuit.draw(circuit.layout_size(), Context::default(), &mut drawer);
         svg::save("test-output/draw_parallel_series_combi.svg", &drawer.finalize()).unwrap();
     }
@@ -366,7 +368,7 @@ mod tests {
     #[test]
     fn test_draw_parallel_series_combi2() {
         let mut drawer = SvgDrawer::new();
-        let circuit = circuit::sub_circuit("(R1+R2||R3)").unwrap().1;
+        let circuit = circuit::sub_circuit::<E>("(R1+R2||R3)").unwrap().1;
         circuit.draw(circuit.layout_size(), Context::default(), &mut drawer);
         svg::save("test-output/draw_parallel_series_combi2.svg", &drawer.finalize()).unwrap();
     }
@@ -374,7 +376,7 @@ mod tests {
     #[test]
     fn test_draw_parallel_series_combi3() {
         let mut drawer = SvgDrawer::new();
-        let circuit = circuit::sub_circuit("((R1+R2||R3)+R4)").unwrap().1;
+        let circuit = circuit::sub_circuit::<E>("((R1+R2||R3)+R4)").unwrap().1;
         circuit.draw(circuit.layout_size(), Context::default(), &mut drawer);
         svg::save("test-output/draw_parallel_series_combi3.svg", &drawer.finalize()).unwrap();
     }
