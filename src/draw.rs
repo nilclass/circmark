@@ -68,8 +68,8 @@ impl Draw for circuit::SubCircuitGroup<'_> {
                 let height = left_size.1.max(right_size.1);
                 let left_size = Size(size.0 * left_size.0 / width_requested, height);
                 let right_size = Size(size.0 * right_size.0 / width_requested, height);
-                left.draw(left_size, ctx.translate(-left_size.0 / 2, 0), drawer);
-                right.draw(right_size, ctx.translate(right_size.0 / 2, 0), drawer);
+                left.draw(left_size, ctx.translate(-size.0 / 2 + left_size.0 / 2, 0), drawer);
+                right.draw(right_size, ctx.translate(size.0 / 2 - right_size.0 / 2, 0), drawer);
             }
             circuit::SubCircuitGroup::Parallel(top, bottom) => {
                 let end_wire_length = 20;
